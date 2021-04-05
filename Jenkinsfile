@@ -122,8 +122,6 @@ spec:
                     if (branch == "semantic-release/major"){
                     
                         echo "release version"
-                    	//sh "mvn --batch-mode release:update-versions"
-                    	APP_VERSION = readMavenPom().getVersion()
                     	def values = APP_VERSION.split('-')
                         def major = values[0].split('\\.')
                         def new_major = major[0].toInteger() + 1
@@ -133,8 +131,6 @@ spec:
                     }else if (branch == "semantic-release/minor"){
                     
                         echo "release version"
-                    	//sh "mvn --batch-mode release:update-versions"
-                    	APP_VERSION = readMavenPom().getVersion()
                     	def values = APP_VERSION.split('-')
                         def minor = values[0].split('\\.')
                         def new_minor = minor[1].toInteger() + 1
@@ -153,14 +149,15 @@ spec:
                     }else if (branch != "master"){
                     
                         echo "environment version"
-                        def version = readMavenPom().getVersion()
-                    	APP_VERSION = "${version}-${branch}"
+                        def values = APP_VERSION.split('-')
+                    	APP_VERSION = "${values[0]}-${branch}"
                         echo "Version : ${APP_VERSION}"
                         
                     }else{
                     
                     	echo "stable version"
-                        APP_VERSION = readMavenPom().getVersion()
+                        def values = APP_VERSION.split('-')
+                    	APP_VERSION = "${values[0]}"
                         echo "Version : ${APP_VERSION}"
                         
                     }
