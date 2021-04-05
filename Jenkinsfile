@@ -260,6 +260,8 @@ spec:
 		                    echo "Maven build..."
 		                    sh "mvn clean package -Dmaven.test.skip=true -Dmaven.test.failure.ignore=true"
 		                    
+		                    sh "ls target"
+		                    
 		                    //sh "mvn verify -Pnative"
 		                    //sh "mvn clean package -Dmaven.test.skip=true -Dmaven.test.failure.ignore=true -Pnative -Dquarkus.native.container-build=true"
 		                    
