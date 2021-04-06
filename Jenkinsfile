@@ -175,7 +175,7 @@ spec:
                 }
             }
         }
-        /*stage('Stage: Test'){
+        stage('Stage: Test'){
             agent { 
                 label "${jenkinsWorker}"
             }
@@ -262,16 +262,12 @@ spec:
 		            steps {
 		                script {
 		                    echo "Maven build..."
-		                    sh "mvn clean package -Dmaven.test.skip=true -Dmaven.test.failure.ignore=true"
-		                    
-		                    sh "ls target"
-		                    
-		                    //sh "mvn verify -Pnative"
-		                    //sh "mvn clean package -Dmaven.test.skip=true -Dmaven.test.failure.ignore=true -Pnative -Dquarkus.native.container-build=true"
+		                    //sh "mvn clean package -Dmaven.test.skip=true -Dmaven.test.failure.ignore=true"
+		                    sh "mvn clean package -Dmaven.test.skip=true -Dmaven.test.failure.ignore=true -Pnative -Dquarkus.native.container-build=true"
 		                    
 		                    echo "Docker Build..."
-		                    sh "docker build -f src/main/docker/Dockerfile.jvm -t ${IMAGEN}:${APP_VERSION} ."
-		                    //sh "docker build -f src/main/docker/Dockerfile.native -t ${IMAGEN}:${APP_VERSION} ."
+		                    //sh "docker build -f src/main/docker/Dockerfile.jvm -t ${IMAGEN}:${APP_VERSION} ."
+		                    sh "docker build -f src/main/docker/Dockerfile.native -t ${IMAGEN}:${APP_VERSION} ."
 		                    
 		                    echo "Docker Tag..."
 		                    sh "docker tag ${IMAGEN}:${APP_VERSION} ${PUSH}:${APP_VERSION}"
@@ -579,7 +575,7 @@ EOF
                     }
                 }
             }
-        }*/
+        }
     }
     post {
         success {
