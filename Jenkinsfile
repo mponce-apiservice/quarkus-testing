@@ -166,7 +166,8 @@ spec:
                     sh "java --version"
                     sh "javac --version"
                     sh "echo $JAVA_HOME"
-                    sh "readlink -f $(which java)"
+                    sh "which java"
+                    //sh "readlink -f $(which java)"
                     
                     echo "Maven build..."
                     sh 'mvn clean package -Dmaven.test.skip=true -Dmaven.test.failure.ignore=true'
