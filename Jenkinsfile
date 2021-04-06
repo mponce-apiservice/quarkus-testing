@@ -221,7 +221,7 @@ spec:
                     }
                 }
             }
-        }*/
+        }
         stage('Stage: Package'){
             when {
 		       not {
@@ -579,7 +579,7 @@ EOF
                     }
                 }
             }
-        }
+        }*/
     }
     post {
         success {
