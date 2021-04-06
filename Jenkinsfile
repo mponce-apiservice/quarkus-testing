@@ -263,7 +263,7 @@ spec:
 		                script {
 		                    echo "Maven build..."
 		                    //sh "mvn clean package -Dmaven.test.skip=true -Dmaven.test.failure.ignore=true"
-		                    sh "mvn clean package -Dmaven.test.skip=true -Dmaven.test.failure.ignore=true -Pnative -Dquarkus.native.container-build=true"
+		                    sh "mvn clean package -Dmaven.test.skip=true -Dmaven.test.failure.ignore=true -Pnative"
 		                    
 		                    echo "Docker Build..."
 		                    //sh "docker build -f src/main/docker/Dockerfile.jvm -t ${IMAGEN}:${APP_VERSION} ."
