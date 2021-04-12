@@ -73,6 +73,10 @@ spec:
                     echo " --> Rama: ${branch}"
                     
                     switch(branch) {
+                    case 'main':
+                        AMBIENTE = 'main'
+                        NAMESPACE = 'apiservice-workshop'
+                        break
                     case 'develop': 
                         AMBIENTE = 'dev'
                         NAMESPACE = 'apiservice-microservicios'
@@ -116,58 +120,6 @@ spec:
             }
             steps {
                 script {
-                    
-                    def branch = "${env.BRANCH_NAME}"
-                    
-                    if (branch == "semantic-release/major"){
-                    
-                        echo "release version"
-                    	def values = APP_VERSION.split('-')
-                        def major = values[0].split('\\.')
-                        def new_major = major[0].toInteger() + 1
-                        APP_VERSION = "${new_major}.0.0-${AMBIENTE}"
-                        echo "Version nueva: ${APP_VERSION}"
-                        
-                    }else if (branch == "semantic-release/minor"){
-                    
-                        echo "release version"
-                    	def values = APP_VERSION.split('-')
-                        def minor = values[0].split('\\.')
-                        def new_minor = minor[1].toInteger() + 1
-                        APP_VERSION = "${minor[0]}.${new_minor}.0-${AMBIENTE}"
-                        echo "Version nueva: ${APP_VERSION}"
-                        
-                    }else if (branch == "semantic-release/patch"){
-                    
-                        echo "release version"
-                    	sh "mvn --batch-mode release:update-versions"
-                    	APP_VERSION = readMavenPom().getVersion()
-                    	def values = APP_VERSION.split('-')
-                        APP_VERSION = "${values[0]}-${AMBIENTE}"
-                        echo "Version nueva: ${APP_VERSION}"
-                        
-                    }else if (branch != "master"){
-                    
-                        echo "environment version"
-                        def values = APP_VERSION.split('-')
-                    	APP_VERSION = "${values[0]}-${branch}"
-                        echo "Version : ${APP_VERSION}"
-                        
-                    }else{
-                    
-                    	echo "stable version"
-                        def values = APP_VERSION.split('-')
-                    	APP_VERSION = "${values[0]}"
-                        echo "Version : ${APP_VERSION}"
-                        
-                    }
-                    
-                    echo "java version"
-                    sh "java --version"
-                    sh "javac --version"
-                    sh "echo $JAVA_HOME"
-                    sh "which java"
-                    //sh "readlink -f $(which java)"
                     
                     echo "Maven build..."
                     sh 'mvn clean package -Dmaven.test.skip=true -Dmaven.test.failure.ignore=true'
@@ -261,9 +213,28 @@ spec:
 		            }
 		            steps {
 		                script {
+		                    
+                            def branch = "${env.BRANCH_NAME}"
+                    
+		                    if (branch != "master"){
+		                    
+		                        echo "environment version"
+		                        def values = APP_VERSION.split('-')
+		                    	APP_VERSION = "${values[0]}-${branch}"
+		                        echo "Version : ${APP_VERSION}"
+		                        
+		                    }else{
+		                    
+		                    	echo "stable version"
+		                        def values = APP_VERSION.split('-')
+		                    	APP_VERSION = "${values[0]}"
+		                        echo "Version : ${APP_VERSION}"
+		                        
+		                    }
+		                	
 		                    echo "Maven build..."
 		                    //sh "mvn clean package -Dmaven.test.skip=true -Dmaven.test.failure.ignore=true"
-		                    sh "mvn clean package -Dmaven.test.skip=true -Dmaven.test.failure.ignore=true -Pnative"
+		                    sh 'mvn clean package -Dmaven.test.skip=true -Dmaven.test.failure.ignore=true -Pnative -Dquarkus.native.additional-build-args="--allow-incomplete-classpath"'
 		                    
 		                    echo "Docker Build..."
 		                    //sh "docker build -f src/main/docker/Dockerfile.jvm -t ${IMAGEN}:${APP_VERSION} ."
@@ -473,7 +444,10 @@ EOF
         stage('Stage: Release') {
             when { 
                 not { 
-                    branch 'develop' 
+                  	anyOf {
+                    	branch 'main' 
+                    	branch 'develop'
+                  	}
                 }
             }
             agent { 
@@ -483,12 +457,44 @@ EOF
                 script {
                     echo " --> Release..."
                     def branch = "${env.BRANCH_NAME}"
-                    def release = "v${APP_VERSION}"
-
-					if (branch == "semantic-release/patch" || branch == "semantic-release/minor" || branch == "semantic-release/major"){
-					
+                    
+                    if (branch == "semantic-release/major"){
+                    
+                        echo "release version"
                     	def values = APP_VERSION.split('-')
-                    	sh "mvn --batch-mode release:update-versions -DdevelopmentVersion=${values[0]}-SNAPSHOT"
+                        def major = values[0].split('\\.')
+                        def new_major = major[0].toInteger() + 1
+                        //APP_VERSION = "${new_major}.0.0.${AMBIENTE}"
+                        APP_VERSION = "${new_major}.0.0"
+                        echo "Version nueva: ${APP_VERSION}"
+                        
+                    }else if (branch == "semantic-release/minor"){
+                    
+                        echo "release version"
+                    	def values = APP_VERSION.split('-')
+                        def minor = values[0].split('\\.')
+                        def new_minor = minor[1].toInteger() + 1
+                        //APP_VERSION = "${minor[0]}.${new_minor}.0.${AMBIENTE}"
+                        APP_VERSION = "${minor[0]}.${new_minor}.0"
+                        echo "Version nueva: ${APP_VERSION}"
+                        
+                    }else if (branch == "semantic-release/patch"){
+                    
+                        echo "release version"
+                    	sh "mvn --batch-mode release:update-versions"
+                    	APP_VERSION = readMavenPom().getVersion()
+                    	def values = APP_VERSION.split('-')
+                        //APP_VERSION = "${values[0]}.${AMBIENTE}"
+                        APP_VERSION = "${values[0]}"
+                        echo "Version nueva: ${APP_VERSION}"
+                        
+                    }
+                    
+					if (branch == "semantic-release/patch" || branch == "semantic-release/minor" || branch == "semantic-release/major"){
+					    
+					    def release = "v${APP_VERSION}-${AMBIENTE}"
+					
+                    	sh "mvn versions:set -DnewVersion=${APP_VERSION}"
                     	
 	                    // Credentials
 	                    withCredentials([usernamePassword(credentialsId: 'mponce-apiservice', usernameVariable: 'GIT_USERNAME', passwordVariable: 'GIT_PASSWORD')]) {
@@ -510,6 +516,9 @@ EOF
 	                        """
 	                    }
                     }else{
+                    
+                        def release = "v${APP_VERSION}"
+                        
                     	// Credentials
 	                    withCredentials([usernamePassword(credentialsId: 'mponce-apiservice', usernameVariable: 'GIT_USERNAME', passwordVariable: 'GIT_PASSWORD')]) {
 	                        sh label: "", 
@@ -532,6 +541,7 @@ EOF
             when { 
                 not {
                     anyOf { 
+                        branch 'main'
                         branch 'develop'
                         branch 'master'
                         branch 'semantic-release/patch'
@@ -589,7 +599,24 @@ EOF
                 // Clean Up
                 script {
                     echo " ==> Cleanup..."
-                    sh "docker rmi -f \$( docker images | grep none | awk '{print \$3}' ) || true"
+
+                    sh label: "", 
+                    script: """
+                        #!/bin/bash
+                        
+                        REMOVEIMAGES_NONE=\$(docker images | grep none | awk '{print \$3}')
+                        if [ "\$REMOVEIMAGES_NONE" != "" ]; then
+                        echo " --> Remove Images none..."
+                        docker rmi -f \$REMOVEIMAGES_NONE        
+                        fi
+                        
+                        REMOVEIMAGES_OLD=\$(docker images | grep ' [hours|days|months|weeks]* ago' | awk '{print \$3}')
+                        if [ "\$REMOVEIMAGES_OLD" != "" ]; then
+                        echo " --> Remove Images old..."
+                        docker rmi -f \$REMOVEIMAGES_OLD        
+                        fi
+                        
+                    """
                 }
                 step([$class: 'WsCleanup'])
             }
